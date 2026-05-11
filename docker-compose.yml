@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # Componente 1: Base de Datos No Relacional [cite: 93, 94]
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_container
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # Componente 2: Backend - Log de Eventos [cite: 83, 84]
+  backend:
+    build: ./backend
+    container_name: backend_container
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/eventos
+
+  # Componente 3: Frontend - Dashboard [cite: 96, 97]
+  frontend:
+    build: ./frontend
+    container_name: frontend_container
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    environment:
+      - BACKEND_URL=http://backend:5000
+
+volumes:
+  mongo_data:
