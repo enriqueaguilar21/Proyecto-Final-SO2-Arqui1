@@ -1,13 +1,11 @@
-import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify
 import serial
 from pymongo import MongoClient
 import datetime
 import threading
+import os
 
-# 👈 CAMBIO: Ruta absoluta a frontend/
-template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend'))
-app = Flask(__name__, template_folder=template_dir)
+app = Flask(__name__)  # Sin template_folder
 
 # --- VARIABLES GLOBALES ---
 ultima_humedad = "---"
@@ -49,9 +47,11 @@ def escuchar_arduino():
 if ser:
     threading.Thread(target=escuchar_arduino, daemon=True).start()
 
+# --- ENDPOINTS API (sin render_template) ---
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return jsonify({"status": "Backend API running"})
 
 @app.route('/get_humedad')
 def get_humedad():
