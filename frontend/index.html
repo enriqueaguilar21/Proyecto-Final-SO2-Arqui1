@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard IoT - Cultivo Inteligente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: auto; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h1, h2, h3 { color: #1a73e8; margin-top: 0; text-align: center; }
+        
+        .status-box { background: #e8f0fe; padding: 20px; border-radius: 12px; font-size: 26px; color: #1967d2; font-weight: bold; text-align: center; margin-bottom: 20px; border: 1px solid #d2e3fc; }
+        
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 250px; margin: 0 auto 25px; }
+        button { padding: 18px; border-radius: 10px; border: none; background: #1a73e8; color: white; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+        button:hover { background: #1557b0; }
+        button:active { transform: scale(0.95); }
+        
+        .btn-stop { background: #d93025; }
+        .btn-stop:hover { background: #b31412; }
+        
+        .action-container { display: flex; gap: 15px; justify-content: center; border-top: 1px solid #eee; pt: 20px; }
+        .btn-action { background: #1e8e3e; flex: 1; max-width: 150px; }
+        .btn-action:hover { background: #137333; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #5f6368; text-transform: uppercase; font-size: 12px; }
+        tr:hover { background-color: #fcfcfc; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Panel de Control</h1>
+            <div class="status-box">
+                💧 Humedad Actual: <span id="hum-val">--</span>%
+            </div>
+            
+            <div class="grid">
+                <div></div><button onclick="send('W')">▲</button><div></div>
+                <button onclick="send('A')">◀</button>
+                <button class="btn-stop" onclick="send('X')">STOP</button>
+                <button onclick="send('D')">▶</button>
+                <div></div><button onclick="send('S')">▼</button><div></div>
+            </div>
+            
+            <div class="action-container">
+                <button class="btn-action" onclick="send('P')">🌱 Sembrar</button>
+                <button class="btn-action" onclick="send('R')">💧 Regar</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Historial de Eventos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Acción Realizada</th>
+                        <th>Humedad</th>
+                        <th>Hora local</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-logs">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Función para enviar comandos al backend
+        function send(command) {
+            fetch('/control?cmd=' + command)
+                .then(response => {
+                    if(response.ok) actualizarLogs();
+                });
+        }
+
+        // Actualiza el valor de humedad cada 2 segundos
+        function actualizarHumedad() {
+            fetch('/get_humedad')
+                .then(res => res.text())
+                .then(h => {
+                    document.getElementById('hum-val').innerText = h;
+                });
+        }
+
+        // Trae los últimos logs desde la base de datos en AWS
+        function actualizarLogs() {
+            fetch('/get_logs')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById('tabla-logs');
+                    tbody.innerHTML = '';
+                    data.forEach(log => {
+                        const fila = `
+                            <tr>
+                                <td><strong>${log.accion}</strong></td>
+                                <td>${log.humedad}%</td>
+                                <td>${log.hora}</td>
+                            </tr>`;
+                        tbody.innerHTML += fila;
+                    });
+                });
+        }
+
+        // Configuración de intervalos de refresco
+        setInterval(actualizarHumedad, 2000);
+        setInterval(actualizarLogs, 5000);
+        
+        // Carga inicial al abrir la página
+        actualizarLogs();
+    </script>
+</body>
+</html>
