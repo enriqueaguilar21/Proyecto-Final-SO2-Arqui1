@@ -9,17 +9,29 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    networks:
+      - app_network
 
   backend:
-    build: ./backend  # Docker buscará el Dockerfile AQUÍ
+    build:
+      context: .              # 👈 CAMBIO: Raíz del proyecto
+      dockerfile: ./backend/Dockerfile  # 👈 Ruta al Dockerfile
     container_name: backend_container
     restart: always
     ports:
       - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/proyecto_so2
+      - SERIAL_PORT=/dev/ttyUSB0
+      - SERIAL_BAUD=9600
     depends_on:
       - mongodb
-    environment:
-      - MONGO_URL=mongodb://mongodb:27017/proyecto_so2
+    networks:
+      - app_network
 
 volumes:
   mongo_data:
+
+networks:
+  app_network:
+    driver: bridge
