@@ -1,20 +1,17 @@
 version: '3.8'
 
 services:
-  # Componente 1: Base de Datos
   mongodb:
     image: mongo:latest
     container_name: mongodb_container
     restart: always
     ports:
       - "27017:27017"
-    command: mongod --bind_ip_all  
     volumes:
       - mongo_data:/data/db
 
-  # Componente 2: Backend (Este ya incluye tu Frontend)
   backend:
-    build: ./backend
+    build: ./backend  # Docker buscará el Dockerfile AQUÍ
     container_name: backend_container
     restart: always
     ports:
