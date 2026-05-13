@@ -12,7 +12,7 @@ services:
     volumes:
       - mongo_data:/data/db
 
-   Componente 2: Backend - Log de Eventos
+  # Componente 2: Backend - Log de Eventos
   backend:
     build: ./backend
     container_name: backend_container
@@ -24,7 +24,7 @@ services:
     environment:
       - MONGO_URL=mongodb://mongodb:27017/eventos
 
-   Componente 3: Frontend - Dashboard
+  # Componente 3: Frontend - Dashboard
   frontend:
     build: ./frontend
     container_name: frontend_container
