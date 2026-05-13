@@ -1,21 +1,22 @@
+import os
 from flask import Flask, render_template, request, jsonify
 import serial
 from pymongo import MongoClient
 import datetime
 import threading
-import os
 
-app = Flask(__name__, template_folder='../frontend')
+# 👈 CAMBIO: Ruta absoluta a frontend/
+template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend'))
+app = Flask(__name__, template_folder=template_dir)
 
 # --- VARIABLES GLOBALES ---
 ultima_humedad = "---"
 
-# --- CONFIGURACIÓN DE MONGODB (AWS) ---
-# Se intenta leer la URI de una variable de entorno para facilitar la orquestación
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://34.227.72.135:27017/")
+# --- CONFIGURACIÓN DE MONGODB ---
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongodb:27017/")
 
 try:
-    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=2000)
+    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
     db = client.proyecto_so2
     logs_col = db.eventos
     print("Conexión a MongoDB exitosa")
@@ -24,12 +25,15 @@ except Exception as e:
     logs_col = None
 
 # --- CONFIGURACIÓN SERIAL ---
+SERIAL_PORT = os.getenv("SERIAL_PORT", "/dev/ttyUSB0")
+SERIAL_BAUD = int(os.getenv("SERIAL_BAUD", "9600"))
+
 try:
-    ser = serial.Serial('COM5', 9600, timeout=1)
-    print("Bluetooth conectado")
-except:
+    ser = serial.Serial(SERIAL_PORT, SERIAL_BAUD, timeout=1)
+    print(f"Bluetooth conectado en {SERIAL_PORT}")
+except Exception as e:
     ser = None
-    print("Error: Bluetooth no detectado.")
+    print(f"Bluetooth no detectado: {e}")
 
 # --- HILO DE LECTURA DE ARDUINO ---
 def escuchar_arduino():
@@ -42,11 +46,11 @@ def escuchar_arduino():
         except:
             pass
 
-threading.Thread(target=escuchar_arduino, daemon=True).start()
+if ser:
+    threading.Thread(target=escuchar_arduino, daemon=True).start()
 
 @app.route('/')
 def index():
-    # Renderiza el archivo index.html que estará en la carpeta frontend
     return render_template('index.html')
 
 @app.route('/get_humedad')
