@@ -2,7 +2,8 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+# Copiar requirements desde backend/ (porque context es la raíz)
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar TODO el proyecto (backend/, frontend/, database/)
