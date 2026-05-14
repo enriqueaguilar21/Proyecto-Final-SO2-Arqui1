@@ -55,7 +55,14 @@ def index():
 
 @app.route('/get_humedad')
 def get_humedad():
-    return str(ultima_humedad)
+    try:
+        # AWS lee lo que la laptop subió a MongoDB
+        estado = db.estado_actual.find_one({"sensor": "humedad"})
+        if estado:
+            return str(estado['valor'])
+    except:
+        pass
+    return "---"
 
 @app.route('/get_logs')
 def get_logs():
