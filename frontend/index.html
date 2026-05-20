@@ -86,6 +86,15 @@
                 });
         }
 
+        /*  function actualizarHumedad() {
+            fetch('/api/get_humedad')
+                .then(res => res.text())
+                .then(h => {
+                    document.getElementById('hum-val').innerText = h;
+                });
+        }
+*/
+
         // Trae los últimos logs desde la base de datos en AWS
         function actualizarLogs() {
             fetch('/api/get_logs')
