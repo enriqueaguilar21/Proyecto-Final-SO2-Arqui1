@@ -13,7 +13,6 @@ Los servicios se encuentran en ejecución y accesibles a través de la siguiente
 ## 2. Diseño de la Arquitectura del Sistema
 
 A continuación se presenta el diagrama de arquitectura implementado en la nube. El sistema sigue un modelo de tres capas contenerizado:
-
 ```mermaid
 graph TD;
     Cliente([Navegador Web / Cliente]) -->|Peticiones HTTP| Frontend;
