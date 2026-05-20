@@ -54,6 +54,41 @@ El sistema ha sido desarrollado utilizando un ecosistema de herramientas robusta
 ---
 
 ## 4. Instrucciones de Uso y Pruebas del Sistema
+Paso 1: Encendido e Inicialización del Hardware Local
+
+- Energizar el robot: Conectar la fuente de alimentación (baterías o cable de alimentación) al microcontrolador Arduino y a los             controladores de los motores.
+
+- Verificar el sensor: Asegurarse de que el sensor de humedad esté correctamente insertado en el suelo o sustrato a analizar.
+
+- Confirmar conectividad local: Verificar que el módulo Bluetooth del robot esté encendido (comúnmente indicado por un parpadeo rápido en su luz LED, esperando vinculación).
+
+Paso 2: Vinculación y Puente de Red (Desde el Dispositivo Móvil)
+Para que el hardware se comunique con la nube, el dispositivo Android con Termux debe actuar como pasarela (Gateway):
+
+Abrir la aplicación Termux en el teléfono móvil.
+
+Asegurar el enlace Bluetooth/Serial con el Arduino mediante la terminal (comprobando que esté asignado al bus físico correspondiente, usualmente en /dev/ttyUSB0 o un puerto serial equivalente).
+
+Conectarse de forma remota a la instancia de AWS para asegurar que el canal de datos esté listo, utilizando la llave criptográfica:
+ssh -i "SOII&ACI.pem" ubuntu@(IP_GENERADA)
+
+Paso 3: Lanzamiento de los Servicios en la Nube (AWS EC2)
+Una vez dentro de la terminal de Ubuntu en AWS mediante la sesión SSH del paso anterior:
+
+Dirigirse al directorio donde se encuentra el proyecto clonado.
+
+Comprobar que tanto el backend de Flask como la base de datos MongoDB estén en ejecución activa con:
+sudo docker ps
+
+(MongoDB Compass)
+Cada vez que se presiona un botón en la interfaz web, el sistema guarda un registro histórico (log) inalterable. Para auditar y visualizar estos datos de forma externa:
+
+Iniciar la herramienta de escritorio MongoDB Compass en su computadora.
+
+En la barra de conexión (URI), ingresar la dirección del servidor remoto:
+
+mongodb://54.167.220.189:27017/
+Hacer clic en "Connect".
 
 **⚠️ Nota importante sobre la Dirección IP:**
 Actualmente, el sistema no cuenta con un dominio propio y está alojado en una instancia en la nube con una **IP pública dinámica**. Esto significa que cada vez que la instancia se detiene y se reinicia, la dirección IP cambia. Para acceder al sistema, asegúrese de utilizar la IP proporcionada en la **Sección 1** de este documento. En caso de que el enlace no responda, contacte al autor para obtener la dirección IP vigente.
