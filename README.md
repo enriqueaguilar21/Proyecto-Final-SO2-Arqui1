@@ -53,4 +53,31 @@ El sistema ha sido desarrollado utilizando un ecosistema de herramientas robusta
 
 ---
 
-## 4. Instrucciones de Uso
+## 4. Instrucciones de Uso y Pruebas del Sistema
+
+**⚠️ Nota importante sobre la Dirección IP:**
+Actualmente, el sistema no cuenta con un dominio propio y está alojado en una instancia en la nube con una **IP pública dinámica**. Esto significa que cada vez que la instancia se detiene y se reinicia, la dirección IP cambia. Para acceder al sistema, asegúrese de utilizar la IP proporcionada en la **Sección 1** de este documento. En caso de que el enlace no responda, contacte al autor para obtener la dirección IP vigente.
+
+### Acceso al Sistema
+1. Abra un navegador web.
+2. Ingrese a la dirección: `http://<TU_IP_ACTUAL_AQUI>` (Ejemplo: `http://54.219.xxx.xxx`).
+3. Se mostrará la interfaz principal (Frontend servido por Nginx).
+
+### Flujo Básico de Uso
+1. **Generación de Eventos:** En la interfaz web, utilice los controles disponibles para registrar un nuevo evento.
+2. **Confirmación:** El sistema enviará la petición al Backend (Flask), el cual procesará la información y devolverá un mensaje de éxito en pantalla.
+3. **Persistencia:** Si accede a la base de datos (MongoDB), podrá verificar que el documento JSON con la información del evento se ha guardado correctamente.
+
+### Pruebas de Tolerancia a Fallos (Demostración)
+El sistema está diseñado en contenedores aislados. Para comprobar el comportamiento ante fallos, puede ejecutar los siguientes comandos en la terminal del servidor:
+
+* **Prueba de caída del Backend:**
+  Ejecute `docker stop backend_container`. Si intenta enviar un evento desde la página web, la interfaz seguirá funcionando, pero mostrará un error de conexión, demostrando que no se registran eventos falsos.
+  *(Para restaurar: `docker start backend_container`)*
+
+* **Prueba de caída de Base de Datos:**
+  Ejecute `docker stop mongodb_container`. Al enviar un evento desde la web o mediante API, el Backend lo recibirá, pero los logs (`docker logs <nombre_contenedor_backend>`) mostrarán un error al intentar persistir los datos, demostrando que no se almacenan.
+  *(Para restaurar: `docker start mongodb_container`)*
+
+* **Prueba de caída del Frontend:**
+  Ejecute `docker stop frontend_container`. La página web dejará de cargar en el navegador. Sin embargo, si se envía una petición `POST` directamente a la API del Backend (por ejemplo, usando Postman o cURL a `http://<IP_ACTUAL>:<PUERTO_BACKEND>/endpoint`), el evento se procesará y guardará correctamente en la base de datos.
