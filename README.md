@@ -21,6 +21,3 @@ graph TD;
         Frontend[Contenedor Frontend] -->|API REST| Backend;
         Backend[Contenedor Backend] -->|Consultas| DB[(Contenedor Base de Datos)];
     end
-
-## 1. Dirección IP pública del servidor
-Los servicios se encuentran en ejecución y accesibles a través de la siguiente dirección IP pública:
