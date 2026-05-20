@@ -86,7 +86,9 @@ def control():
             "origen": "Orchestrated Dashboard"
         }
         logs_col.insert_one(log)
-    return "OK"
+   return jsonify({
+    "mensaje": "Comando ejecutado correctamente"
+})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
