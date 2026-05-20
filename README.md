@@ -8,7 +8,7 @@ Los servicios se encuentran en ejecución y accesibles a través de la siguiente
 
 **[INGRESA AQUÍ LA IP PROPORCIONADA POR EL AUTOR ]** *(Ejemplola: http://203.0.113.50)*
 
-*(Nota: Si tu frontend y backend corren en puertos específicos, agrégalos aquí. Ejemplo: Frontend en el puerto 80, Backend en el 3000).*
+*(Nota: Backend en el 5000).*
 
 ## 2. Diseño de la Arquitectura del Sistema
 
