@@ -6,7 +6,7 @@ Este repositorio contiene el código fuente de los tres componentes principales 
 ## 1. Dirección IP pública del servidor
 Los servicios se encuentran en ejecución y accesibles a través de la siguiente dirección IP pública:
 
-**[INGRESA AQUÍ TU IP PÚBLICA]** *(Ejemplo: http://203.0.113.50)*
+**[INGRESA AQUÍ LA IP PROPORCIONADA POR EL AUTOR ]** *(Ejemplola: http://203.0.113.50)*
 
 *(Nota: Si tu frontend y backend corren en puertos específicos, agrégalos aquí. Ejemplo: Frontend en el puerto 80, Backend en el 3000).*
 
