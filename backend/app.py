@@ -5,9 +5,9 @@ import datetime
 import threading
 import os
 
-app = Flask(__name__)   # Inicialización principal Flask
+app = Flask(__name__)  # Sin template_folder
 
-# Variable utilizada para almacenar la última humedad recibida
+# --- VARIABLES GLOBALES ---
 ultima_humedad = "---"
 
 # --- CONFIGURACIÓN DE MONGODB ---
@@ -17,9 +17,9 @@ try:
     client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
     db = client.proyecto_so2
     logs_col = db.eventos
-   print("MongoDB conectado correctamente")
-except Exception as error_db:
-    print(f"Error de base de datos: {error_db}")
+    print("Conexión a MongoDB exitosa")
+except Exception as e:
+    print(f"Error de base de datos: {e}")
     logs_col = None
 
 # --- CONFIGURACIÓN SERIAL ---
@@ -86,9 +86,7 @@ def control():
             "origen": "Orchestrated Dashboard"
         }
         logs_col.insert_one(log)
-   return jsonify({
-    "mensaje": "Comando ejecutado correctamente"
-})
+    return "OK"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
