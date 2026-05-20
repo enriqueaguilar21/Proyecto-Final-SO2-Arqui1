@@ -72,8 +72,21 @@ def get_logs():
     return jsonify([])
 
 @app.route('/control')
-
+def control():
+    cmd = request.args.get('cmd')
+    if ser and ser.is_open:
+        ser.write((cmd + '\n').encode())
+    
+    if logs_col is not None:
+        nombres = {'W':'Adelante','S':'Atrás','A':'Izquierda','D':'Derecha','X':'Parar','P':'Sembrar','R':'Regar'}
+        log = {
+            "fecha": datetime.datetime.now(),
+            "accion": nombres.get(cmd, "Comando"),
+            "humedad": ultima_humedad,
+            "origen": "Orchestrated Dashboard"
+        }
+        logs_col.insert_one(log)
+    return "OK"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
-
