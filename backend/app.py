@@ -5,7 +5,7 @@ import datetime
 import threading
 import os
 
-app = Flask(__name__)  # Sin template_folder
+app = Flask(__name__)   # Inicialización principal Flask
 
 # --- VARIABLES GLOBALES ---
 ultima_humedad = "---"
