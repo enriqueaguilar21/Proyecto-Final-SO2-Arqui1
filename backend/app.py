@@ -17,7 +17,7 @@ try:
     client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
     db = client.proyecto_so2
     logs_col = db.eventos
-    print("Conexión a MongoDB exitosa")
+   print("MongoDB conectado correctamente")
 except Exception as e:
     print(f"Error de base de datos: {e}")
     logs_col = None
