@@ -19,7 +19,7 @@ try:
     logs_col = db.eventos
    print("MongoDB conectado correctamente")
 except Exception as error_db:
-    print(f"Error de base de datos: {e}")
+    print(f"Error de base de datos: {error_db}")
     logs_col = None
 
 # --- CONFIGURACIÓN SERIAL ---
