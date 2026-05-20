@@ -18,7 +18,7 @@ try:
     db = client.proyecto_so2
     logs_col = db.eventos
    print("MongoDB conectado correctamente")
-except Exception as e:
+except Exception as error_db:
     print(f"Error de base de datos: {e}")
     logs_col = None
 
