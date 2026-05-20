@@ -6,7 +6,8 @@ Este repositorio contiene el código fuente de los tres componentes principales 
 ## 1. Dirección IP pública del servidor
 Los servicios se encuentran en ejecución y accesibles a través de la siguiente dirección IP pública:
 
-**[INGRESA AQUÍ LA IP PROPORCIONADA POR EL AUTOR ]** *(Ejemplola: http://203.0.113.50)*
+**⚠️ Nota importante sobre la Dirección IP:**
+Actualmente, el sistema no cuenta con un dominio propio y está alojado en una instancia en la nube con una **IP pública dinámica**. Esto significa que cada vez que la instancia se detiene y se reinicia, la dirección IP cambia. Para acceder al sistema, asegúrese de utilizar la IP proporcionada en la **Sección 1** de este documento. En caso de que el enlace no responda, contacte al autor para obtener la dirección IP vigente.
 
 *(Nota: Backend en el 5000).*
 
@@ -90,8 +91,6 @@ En la barra de conexión (URI), ingresar la dirección del servidor remoto:
 mongodb://54.167.220.189:27017/
 Hacer clic en "Connect".
 
-**⚠️ Nota importante sobre la Dirección IP:**
-Actualmente, el sistema no cuenta con un dominio propio y está alojado en una instancia en la nube con una **IP pública dinámica**. Esto significa que cada vez que la instancia se detiene y se reinicia, la dirección IP cambia. Para acceder al sistema, asegúrese de utilizar la IP proporcionada en la **Sección 1** de este documento. En caso de que el enlace no responda, contacte al autor para obtener la dirección IP vigente.
 
 ### Acceso al Sistema
 1. Abra un navegador web.
