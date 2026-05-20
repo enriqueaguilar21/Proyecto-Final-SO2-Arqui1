@@ -7,7 +7,7 @@ import os
 
 app = Flask(__name__)   # Inicialización principal Flask
 
-# --- VARIABLES GLOBALES ---
+# Variable utilizada para almacenar la última humedad recibida
 ultima_humedad = "---"
 
 # --- CONFIGURACIÓN DE MONGODB ---
