@@ -76,7 +76,7 @@ El sistema está diseñado en contenedores aislados. Para comprobar el comportam
   *(Para restaurar: `docker start backend_container`)*
 
 * **Prueba de caída de Base de Datos:**
-  Ejecute `docker stop mongodb_container`. Al enviar un evento desde la web o mediante API, el Backend lo recibirá, pero los logs (`docker logs <nombre_contenedor_backend>`) mostrarán un error al intentar persistir los datos, demostrando que no se almacenan.
+  Ejecute `docker stop mongodb_container`. Al enviar un evento desde la web o mediante API, el Backend lo recibirá, pero los logs (`docker logs backend_container`) mostrarán un error al intentar persistir los datos, demostrando que no se almacenan.
   *(Para restaurar: `docker start mongodb_container`)*
 
 * **Prueba de caída del Frontend:**
