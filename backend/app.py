@@ -14,12 +14,13 @@ ultima_humedad = "---"
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongodb:27017/")
 
 try:
+    print(f"[*] Intentando conectar a la base de datos en: {MONGO_URI}") # <-- CAMBIO: Log de intento
     client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
     db = client.proyecto_so2
     logs_col = db.eventos
-    print("Conexión a MongoDB exitosa")
+    print("[+] Conexión a MongoDB exitosa y lista para registrar") # <-- CAMBIO: Mensaje ampliado
 except Exception as e:
-    print(f"Error de base de datos: {e}")
+    print(f"[-] Error crítico de base de datos: {e}") # <-- CAMBIO: Mensaje de error modificado
     logs_col = None
 
 # --- CONFIGURACIÓN SERIAL ---
@@ -28,10 +29,10 @@ SERIAL_BAUD = int(os.getenv("SERIAL_BAUD", "9600"))
 
 try:
     ser = serial.Serial(SERIAL_PORT, SERIAL_BAUD, timeout=1)
-    print(f"Bluetooth conectado en {SERIAL_PORT}")
+    print(f"[+] Bluetooth del carrito conectado en {SERIAL_PORT}") # <-- CAMBIO: Contexto añadido
 except Exception as e:
     ser = None
-    print(f"Bluetooth no detectado: {e}")
+    print(f"[-] Bluetooth no detectado: {e}")
 
 # --- HILO DE LECTURA DE ARDUINO ---
 def escuchar_arduino():
@@ -41,6 +42,7 @@ def escuchar_arduino():
             linea = ser.readline().decode('utf-8').strip()
             if linea.startswith("H:"):
                 ultima_humedad = linea.split(":")[1]
+                # print(f"Humedad actualizada a: {ultima_humedad}") # <-- CAMBIO: Comentario de depuración
         except:
             pass
 
@@ -51,7 +53,7 @@ if ser:
 
 @app.route('/')
 def index():
-    return jsonify({"status": "Backend API running"})
+    return jsonify({"status": "Backend API running", "version": "1.1-debug"}) # <-- CAMBIO: Versión añadida
 
 @app.route('/get_humedad')
 def get_humedad():
