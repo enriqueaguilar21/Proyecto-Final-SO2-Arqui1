@@ -92,3 +92,5 @@ def control():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+    git add nombre_de_tu_archivo.py
+git commit -m "Add verbose logging for MongoDB and Bluetooth connections"
