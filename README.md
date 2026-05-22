@@ -1,7 +1,7 @@
 # Proyecto-Final-SO2-Arqui1
 PROYECTO Robótica y Servidor Web Linux
 
-## 👥 Integrantes del Equipo
+## 👥 Integrantes del Equipo 2
 
 | Nombre del Integrante | Carné|
 | :--- | :--- |
