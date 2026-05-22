@@ -1,6 +1,15 @@
 # Proyecto-Final-SO2-Arqui1
 PROYECTO Robótica y Servidor Web Linux
 
+## 👥 Integrantes del Equipo
+
+| Nombre del Integrante | Rol en el Proyecto |
+| :--- | :--- |
+| Carlos Enrique Aguilar Sirín 1990-18-13889 
+| Elicia Idaida Más Canel      1990-23-20746
+| [Nombre Integrante 3]
+
+
 Este repositorio contiene el código fuente de los tres componentes principales del sistema (Frontend, Backend y Base de Datos) desplegados en un entorno contenerizado.
 
 ## 1. Dirección IP pública del servidor
