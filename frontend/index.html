@@ -20,7 +20,7 @@
         .btn-stop { background: #d93025; }
         .btn-stop:hover { background: #b31412; }
         
-        .action-container { display: flex; gap: 15px; justify-content: center; border-top: 1px solid #eee; pt: 20px; }
+        .action-container { display: flex; gap: 15px; justify-content: center; border-top: 1px solid #eee; padding-top: 20px; }
         .btn-action { background: #1e8e3e; flex: 1; max-width: 150px; }
         .btn-action:hover { background: #137333; }
 
@@ -58,12 +58,11 @@
                 <thead>
                     <tr>
                         <th>Acción Realizada</th>
-                        <th>Humedad</th>
                         <th>Hora local</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-logs">
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>
@@ -86,7 +85,7 @@
                 });
         }
 
-        // Trae los últimos logs desde la base de datos en AWS
+        // Trae los últimos logs desde el servidor
         function actualizarLogs() {
             fetch('/api/get_logs')
                 .then(res => res.json())
@@ -97,7 +96,6 @@
                         const fila = `
                             <tr>
                                 <td><strong>${log.accion}</strong></td>
-                                <td>${log.humedad}%</td>
                                 <td>${log.hora}</td>
                             </tr>`;
                         tbody.innerHTML += fila;
