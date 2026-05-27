@@ -2,28 +2,35 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard IoT - Cultivo Inteligente</title>
+    <title>Dashboard IoT - Carrito de Exploración</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; user-select: none; }
         .container { max-width: 800px; margin: auto; display: flex; flex-direction: column; gap: 20px; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         h1, h2, h3 { color: #1a73e8; margin-top: 0; text-align: center; }
         
-        .status-box { background: #e8f0fe; padding: 20px; border-radius: 12px; font-size: 26px; color: #1967d2; font-weight: bold; text-align: center; margin-bottom: 20px; border: 1px solid #d2e3fc; }
+        /* Contenedor de la Cámara de Video */
+        .camera-box { width: 100%; max-width: 640px; margin: 15px auto; background: #000; border-radius: 12px; overflow: hidden; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; color: #aaa; font-weight: bold; position: relative; border: 2px solid #ddd; }
+        .camera-box img { width: 100%; height: 100%; object-fit: cover; }
         
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 250px; margin: 0 auto 25px; }
-        button { padding: 18px; border-radius: 10px; border: none; background: #1a73e8; color: white; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+        /* Configuración de IP Dinámica */
+        .config-box { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; }
+        .input-ip { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 60%; max-width: 300px; text-align: center; font-size: 16px; }
+        
+        /* Rejilla del Control de Movimiento */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 250px; margin: 20px auto; }
+        
+        /* Estilos de botones */
+        button { padding: 18px; border-radius: 10px; border: none; background: #1a73e8; color: white; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.2s, transform 0.1s; touch-action: manipulation; }
         button:hover { background: #1557b0; }
         button:active { transform: scale(0.95); }
+        .invisible { background: transparent; pointer-events: none; }
         
-        .btn-stop { background: #d93025; }
-        .btn-stop:hover { background: #b31412; }
+        /* Botón de Captura */
+        .btn-capture { display: block; width: 100%; max-width: 200px; margin: 15px auto 0; background: #e8f0fe; color: #1967d2; border: 2px solid #1a73e8; padding: 12px; border-radius: 8px; }
+        .btn-capture:hover { background: #d2e3fc; }
         
-        .action-container { display: flex; gap: 15px; justify-content: center; border-top: 1px solid #eee; padding-top: 20px; }
-        .btn-action { background: #1e8e3e; flex: 1; max-width: 150px; }
-        .btn-action:hover { background: #137333; }
-
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #f8f9fa; color: #5f6368; text-transform: uppercase; font-size: 12px; }
@@ -32,23 +39,38 @@
 </head>
 <body>
     <div class="container">
+        
         <div class="card">
-            <h1>Panel de Control</h1>
-            <div class="status-box">
-                💧 Humedad Actual: <span id="hum-val">--</span>%
+            <h1>Monitoreo de Video</h1>
+            
+            <div class="config-box">
+                <input type="text" id="ip-celular" class="input-ip" placeholder="Ej: 192.168.1.15:8080" value="">
+                <button style="padding: 10px 20px; font-size: 14px;" onclick="conectarCamara()">Conectar</button>
             </div>
+
+            <div class="camera-box">
+                <span id="cam-placeholder">Ingresa la IP de tu celular y presiona Conectar</span>
+                <img src="" id="video-stream" style="display: none;" alt="Streaming en vivo">
+            </div>
+            <button class="btn-capture" onclick="tomarFoto()">📸 Tomar Foto</button>
+        </div>
+
+        <div class="card">
+            <h3>Control de Movimiento</h3>
+            <p style="text-align:center; color:#666; font-size:14px; margin:0;">Mantén presionado para moverte. Suelta para detenerte.</p>
             
             <div class="grid">
-                <div></div><button onclick="send('W')">▲</button><div></div>
-                <button onclick="send('A')">◀</button>
-                <button class="btn-stop" onclick="send('X')">STOP</button>
-                <button onclick="send('D')">▶</button>
-                <div></div><button onclick="send('S')">▼</button><div></div>
-            </div>
-            
-            <div class="action-container">
-                <button class="btn-action" onclick="send('P')">🌱 Sembrar</button>
-                <button class="btn-action" onclick="send('R')">💧 Regar</button>
+                <div class="invisible"></div>
+                <button id="btn-W">▲</button>
+                <div class="invisible"></div>
+                
+                <button id="id-A">◀</button>
+                <div class="invisible"></div>
+                <button id="id-D">▶</button>
+                
+                <div class="invisible"></div>
+                <button id="btn-S">▼</button>
+                <div class="invisible"></div>
             </div>
         </div>
 
@@ -68,24 +90,78 @@
     </div>
 
     <script>
-        // Función para enviar comandos al backend
+        // Mapeo de botones con sus comandos seriales correspondientes
+        const controles = {
+            'btn-W': 'W',
+            'id-A': 'A',
+            'id-D': 'D',
+            'btn-S': 'S'
+        };
+
+        // Configurar los escuchadores de eventos táctiles y de mouse
+        Object.keys(controles).forEach(id => {
+            const boton = document.getElementById(id);
+            const letra = controles[id];
+
+            if (boton) {
+                boton.addEventListener('mousedown', () => send(letra));
+                boton.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    send(letra);
+                });
+
+                boton.addEventListener('mouseup', () => detenerCarro());
+                boton.addEventListener('mouseleave', () => detenerCarro());
+                boton.addEventListener('touchend', () => detenerCarro());
+            }
+        });
+
+        // Enviar comandos respetando el prefijo /api/ de producción en AWS
         function send(command) {
             fetch('/api/control?cmd=' + command)
                 .then(response => {
-                    if(response.ok) actualizarLogs();
+                    if(response.ok) {
+                        setTimeout(actualizarLogs, 800); 
+                    }
                 });
         }
 
-        // Actualiza el valor de humedad cada 2 segundos
-        function actualizarHumedad() {
-            fetch('/api/get_humedad')
-                .then(res => res.text())
-                .then(h => {
-                    document.getElementById('hum-val').innerText = h;
-                });
+        function detenerCarro() {
+            fetch('/api/control?cmd=X');
         }
 
-        // Trae los últimos logs desde el servidor
+        // Conecta el feed de video usando la IP ingresada en la interfaz
+        function conectarCamara() {
+            const ip = document.getElementById('ip-celular').value.trim();
+            const img = document.getElementById('video-stream');
+            const placeholder = document.getElementById('cam-placeholder');
+            
+            if(ip) {
+                placeholder.style.display = 'none';
+                img.src = 'http://' + ip + '/video';
+                img.style.display = 'block';
+            } else {
+                alert("Por favor ingresa una dirección IP válida.");
+            }
+        }
+
+        // Solicita la captura de foto pasándole la IP actual del teléfono al backend
+        function tomarFoto() {
+            const ip = document.getElementById('ip-celular').value.trim();
+            if(!ip) {
+                alert("Primero debes conectar una cámara ingresando su IP.");
+                return;
+            }
+            
+            fetch('/api/capturar_foto?ip=' + ip)
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.mensaje || "Foto procesada");
+                })
+                .catch(err => console.error("Error al tomar foto:", err));
+        }
+
+        // Trae los últimos logs desde el backend en AWS
         function actualizarLogs() {
             fetch('/api/get_logs')
                 .then(res => res.json())
@@ -103,11 +179,8 @@
                 });
         }
 
-        // Configuración de intervalos de refresco
-        setInterval(actualizarHumedad, 2000);
+        // Refrescar el historial de AWS automáticamente cada 5 segundos
         setInterval(actualizarLogs, 5000);
-        
-        // Carga inicial al abrir la página
         actualizarLogs();
     </script>
 </body>
