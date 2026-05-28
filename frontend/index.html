@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard IoT - Carrito de Exploración Clínica</title>
+    <title>Dashboard IoT - Carrito de Exploración</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; user-select: none; }
@@ -22,7 +22,7 @@
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 250px; margin: 20px auto; }
         
         /* Estilos de botones */
-        button { padding: 18px; border-radius: 10px; border: none; background: #1a73e8; color: white; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.2s, transform 0.1s; touch-action: none; }
+        button { padding: 18px; border-radius: 10px; border: none; background: #1a73e8; color: white; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.2s, transform 0.1s; touch-action: manipulation; }
         button:hover { background: #1557b0; }
         button:active { transform: scale(0.95); }
         .invisible { background: transparent; pointer-events: none; }
@@ -31,19 +31,10 @@
         .btn-capture { display: block; width: 100%; max-width: 200px; margin: 15px auto 0; background: #e8f0fe; color: #1967d2; border: 2px solid #1a73e8; padding: 12px; border-radius: 8px; }
         .btn-capture:hover { background: #d2e3fc; }
         
-        /* Estilos de Tabla del Historial Clínico */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #f8f9fa; color: #5f6368; text-transform: uppercase; font-size: 12px; }
         tr:hover { background-color: #fcfcfc; }
-
-        /* Estilos del Monitor de Salud en Tiempo Real (MAX30102) */
-        .salud-box { display: flex; flex-direction: column; gap: 12px; max-width: 400px; margin: 10px auto; background: #1e1e1e; color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-        .salud-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 8px; }
-        .salud-row:last-of-type { border-bottom: none; padding-bottom: 0; }
-        .salud-valor { font-size: 1.8em; font-weight: bold; color: #00ffcc; }
-        .salud-promedio { font-size: 1.8em; font-weight: bold; color: #ffcc00; }
-        .salud-estado { font-style: italic; color: #aaa; text-align: center; background: #2a2a2a; padding: 8px; border-radius: 6px; margin: 5px 0 0; font-size: 0.95em; }
     </style>
 </head>
 <body>
@@ -62,29 +53,6 @@
                 <img src="" id="video-stream" style="display: none;" alt="Streaming en vivo">
             </div>
             <button class="btn-capture" onclick="tomarFoto()">📸 Tomar Foto</button>
-        </div>
-
-        <div class="card">
-            <h3>🩺 Telemetría Médica (MAX30102)</h3>
-            <div class="salud-box">
-                <div class="salud-row">
-                    <span>Ritmo Cardíaco:</span>
-                    <div>
-                        <span id="bpm-value" class="salud-valor">0.0</span>
-                        <span style="color: #888; font-size: 0.9em; margin-left: 5px;">BPM</span>
-                    </div>
-                </div>
-                <div class="salud-row">
-                    <span>Promedio Estable:</span>
-                    <div>
-                        <span id="prom-value" class="salud-promedio">0</span>
-                        <span style="color: #888; font-size: 0.9em; margin-left: 5px;">dpm</span>
-                    </div>
-                </div>
-                <div id="salud-estado" class="salud-estado">
-                    Conectando con el sensor...
-                </div>
-            </div>
         </div>
 
         <div class="card">
@@ -107,14 +75,12 @@
         </div>
 
         <div class="card">
-            <h3>📋 Historial Clínico de Pacientes (AWS Cloud)</h3>
+            <h3>Historial de Eventos</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Hora Local</th>
-                        <th>Ritmo Promedio</th>
-                        <th>Diagnóstico Médico</th>
-                        <th>Evidencia (Foto)</th>
+                        <th>Acción Realizada</th>
+                        <th>Hora local</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-logs">
@@ -124,7 +90,7 @@
     </div>
 
     <script>
-        // Mapeo de mandos del teclado/mouse
+        // Mapeo de botones con sus comandos seriales correspondientes
         const controles = {
             'btn-W': 'W',
             'id-A': 'A',
@@ -132,7 +98,7 @@
             'btn-S': 'S'
         };
 
-        // Escuchadores de eventos para los pulsadores de dirección
+        // Configurar los escuchadores de eventos táctiles y de mouse
         Object.keys(controles).forEach(id => {
             const boton = document.getElementById(id);
             const letra = controles[id];
@@ -150,15 +116,21 @@
             }
         });
 
+        // Enviar comandos respetando el prefijo /api/ de producción en AWS
         function send(command) {
-            fetch('/api/control?cmd=' + command);
+            fetch('/api/control?cmd=' + command)
+                .then(response => {
+                    if(response.ok) {
+                        setTimeout(actualizarLogs, 800); 
+                    }
+                });
         }
 
         function detenerCarro() {
             fetch('/api/control?cmd=X');
         }
 
-        // Enlace del feed de la cámara IP
+        // Conecta el feed de video usando la IP ingresada en la interfaz
         function conectarCamara() {
             const ip = document.getElementById('ip-celular').value.trim();
             const img = document.getElementById('video-stream');
@@ -173,7 +145,7 @@
             }
         }
 
-        // Trigger para capturar imagen fija e impactar en el historial clínico permanente
+        // Solicita la captura de foto pasándole la IP actual del teléfono al backend
         function tomarFoto() {
             const ip = document.getElementById('ip-celular').value.trim();
             if(!ip) {
@@ -185,70 +157,32 @@
                 .then(res => res.json())
                 .then(data => {
                     alert(data.mensaje || "Foto procesada");
-                    actualizarLogs();
                 })
                 .catch(err => console.error("Error al tomar foto:", err));
         }
 
-        // Trae los registros clínicos consolidados desde MongoDB (AWS)
+        // Trae los últimos logs desde el backend en AWS
         function actualizarLogs() {
             fetch('/api/get_logs')
                 .then(res => res.json())
                 .then(data => {
                     const tbody = document.getElementById('tabla-logs');
                     tbody.innerHTML = '';
-                    
                     data.forEach(log => {
-                        let badgeColor = "#aaa";
-                        if (log.estado_clinico.includes("Normal")) badgeColor = "#2ed573";
-                        if (log.estado_clinico.includes("Taquicardia")) badgeColor = "#ff4757";
-                        if (log.estado_clinico.includes("Bradicardia")) badgeColor = "#1e90ff";
-
                         const fila = `
                             <tr>
-                                <td><strong>${log.hora}</strong></td>
-                                <td><span style="font-weight:bold; color:#f39c12;">${log.bpm_promedio} dpm</span></td>
-                                <td><span style="color:${badgeColor}; font-weight:bold;">${log.estado_clinico}</span></td>
-                                <td><span style="font-size:0.9em; color:#666;">📸 ${log.foto}</span></td>
+                                <td><strong>${log.accion}</strong></td>
+                                <td>${log.hora}</td>
                             </tr>`;
                         tbody.innerHTML += fila;
                     });
-                })
-                .catch(err => console.error("Error al traer historial de AWS:", err));
+                });
         }
 
-        // Consume el endpoint /api/salud en AWS (Que lee el estado en tiempo real enviado por el Local)
-        function actualizarMonitorSalud() {
-            fetch('/api/salud')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('bpm-value').innerText = data.bpm.toFixed(1);
-                    document.getElementById('prom-value').innerText = data.promedio;
-                    
-                    const estadoElement = document.getElementById('salud-estado');
-                    estadoElement.innerText = data.estado;
-                    
-                    // Colores e indicador dinámico para la tarjeta oscura según el diagnóstico
-                    if (data.promedio > 0) {
-                        estadoElement.style.fontWeight = "bold";
-                        if (data.estado.includes("Normal")) estadoElement.style.color = "#00ffcc";
-                        else if (data.estado.includes("Taquicardia")) estadoElement.style.color = "#ff4757";
-                        else if (data.estado.includes("Bradicardia")) estadoElement.style.color = "#3498db";
-                    } else {
-                        estadoElement.style.color = "#aaa";
-                        estadoElement.style.fontWeight = "normal";
-                    }
-                })
-                .catch(error => console.error('Error al mapear telemetría:', error));
-        }
-        
-        // Intervalos de actualización automática
-        setInterval(actualizarMonitorSalud, 2000);
+        // Refrescar el historial de AWS automáticamente cada 5 segundos
         setInterval(actualizarLogs, 5000);
-        
-        // Carga inicial al abrir la página
         actualizarLogs();
-        actualizarMonitorSalud();
     </script>
 </body>
 </html>
+
