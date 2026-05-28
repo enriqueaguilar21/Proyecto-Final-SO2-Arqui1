@@ -2,48 +2,66 @@ from flask import Flask, request, jsonify, render_template
 from pymongo import MongoClient
 import datetime
 import os
-import requests  # Requerido para extraer la captura desde IP Webcam
 
-app = Flask(__name__, template_folder='.') # Permite servir el index.html en la misma raíz si es necesario
+app = Flask(__name__, template_folder='.')
 
 # --- CONFIGURACIÓN DE MONGODB (RED INTERNA DOCKER EN AWS) ---
+# En AWS, se conecta al contenedor de MongoDB mediante su alias en la red de Docker.
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongodb:27017/")
 
 try:
     client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
     db = client.proyecto_so2
     logs_col = db.eventos
-    print("Conexión a MongoDB en AWS exitosa")
+    print("🚀 [AWS CLOUD] Conexión interna a MongoDB exitosa.")
 except Exception as e:
-    print(f"Error de base de datos en AWS: {e}")
+    print(f"❌ [AWS CLOUD] Error de conexión a la base de datos interna: {e}")
     logs_col = None
 
 # --- CONFIGURACIÓN SERIAL INACTIVA EN AWS (BLINDADA) ---
-# En la nube no hay conexión física Bluetooth, por lo que se anula limpiamente para evitar errores.
+# Al ser un servidor en la nube, anulamos el puerto físico para evitar excepciones por falta de hardware.
 ser = None
-print("[AWS CLOUD] Puerto Serial deshabilitado localmente (Modo Servidor Web Activo)")
-
-# --- VARIABLE DE CONTROL DE ESTADO ---
-estado_actual = "X"
+print("[AWS CLOUD] Modo Servidor Web Activo: Puerto serial físico deshabilitado.")
 
 # --- ENDPOINTS API ---
 
 @app.route('/')
 def index():
-    # En lugar de solo responder un JSON, en AWS servimos tu frontend index.html moderno
+    # Cuando alguien entra a la IP de AWS, Flask renderiza el index.html moderno
     try:
         return render_template('index.html')
-    except Exception:
-        return jsonify({"status": "Backend API running - Carrito Explorador V2", "nota": "Sube el index.html al servidor"})
+    except Exception as e:
+        return jsonify({
+            "status": "Backend API running - Carrito Explorador V2",
+            "error": "index.html no encontrado en la raíz del servidor de AWS"
+        }), 404
 
-@app.route('/get_logs')
-def get_logs():
+@app.route('/api/salud')
+def api_salud():
+    # OPCEÓN B: El frontend de AWS consume este endpoint cada 2 segundos.
+    # Aquí buscamos el registro que la computadora local actualiza constantemente.
     if logs_col is not None:
         try:
-            # ✨ ACTUALIZADO: Busca los registros médicos que tu PC local subió a AWS
+            telemetria = logs_col.find_one({"tipo": "telemetria_tiempo_real"})
+            
+            if telemetria:
+                return jsonify({
+                    "bpm": telemetria.get("bpm", 0.0),
+                    "promedio": telemetria.get("promedio", 0),
+                    "estado": telemetria.get("estado", "Estación local sin telemetría activa")
+                })
+        except Exception as e:
+            print(f"⚠️ [AWS] Error al consultar telemetría en tiempo real: {e}")
+            
+    return jsonify({"bpm": 0.0, "promedio": 0, "estado": "Sensor fuera de línea (Estación Local Apagada)"})
+
+@app.route('/api/get_logs')
+def get_logs():
+    # Devuelve el Historial Clínico de los Pacientes registrados en la nube
+    if logs_col is not None:
+        try:
             eventos = logs_col.find({"biomedicos": {"$exists": True}}).sort("fecha", -1).limit(10)
             lista_logs = []
-            
             for e in eventos:
                 biomedicos = e.get("biomedicos", {})
                 lista_logs.append({
@@ -53,26 +71,22 @@ def get_logs():
                     "foto": e.get("archivo_foto", "N/A")
                 })
             return jsonify(lista_logs)
-        except Exception as err:
-            print(f"⚠️ Error al consultar MongoDB en AWS: {err}")
+        except Exception as e:
+            print(f"⚠️ [AWS] Error al traer el historial clínico: {e}")
     return jsonify([])
 
-@app.route('/control')
+@app.route('/api/control')
 def control():
-    # Mantenemos la ruta viva por si el frontend hace peticiones de movimiento,
-    # pero en AWS no realiza ninguna acción serial para evitar excepciones.
+    # Ruta pasiva en AWS. Mantiene la compatibilidad por si el diseño intenta mandar comandos de movimiento,
+    # pero en la nube no ejecuta acciones de hardware.
     return "OK"
 
-@app.route('/capturar_foto')
+@app.route('/api/capturar_foto')
 def capturar_foto():
-    # Este endpoint en AWS puede quedar pasivo, ya que tu PC local se encarga de tomar
-    # la captura y subir el objeto estructurado a MongoDB.
-    return jsonify({"mensaje": "La captura se procesa desde la estación local."})
-
-# Endpoint simulado por si el HTML de AWS intenta consultar estados locales
-@app.route('/api/salud')
-def api_salud():
-    return jsonify({"bpm": 0.0, "promedio": 0, "estado": "Monitoreo disponible en estación local"})
+    # Informativo para el frontend: Las capturas y procesamiento de imágenes
+    # se ejecutan en local e impactan de manera directa en el MongoDB compartido.
+    return jsonify({"mensaje": "La captura fotográfica se procesa e inserta directamente desde la estación local."})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    # Producción en AWS dentro de Docker
+    app.run(host='0.0.0.0', port=5000, debug=False)
