@@ -1,116 +1,78 @@
-from flask import Flask, request, jsonify
-import serial
+from flask import Flask, request, jsonify, render_template
 from pymongo import MongoClient
 import datetime
 import os
 import requests  # Requerido para extraer la captura desde IP Webcam
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.') # Permite servir el index.html en la misma raíz si es necesario
 
-# --- CONFIGURACIÓN DE MONGODB (RED INTERNA DOCKER) ---
+# --- CONFIGURACIÓN DE MONGODB (RED INTERNA DOCKER EN AWS) ---
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://mongodb:27017/")
 
 try:
     client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
     db = client.proyecto_so2
     logs_col = db.eventos
-    print("Conexión a MongoDB exitosa")
+    print("Conexión a MongoDB en AWS exitosa")
 except Exception as e:
-    print(f"Error de base de datos: {e}")
+    print(f"Error de base de datos en AWS: {e}")
     logs_col = None
 
-# --- CONFIGURACIÓN SERIAL (PASSTHROUGH EN DOCKER) ---
-SERIAL_PORT = os.getenv("SERIAL_PORT", "/dev/ttyUSB0")
-SERIAL_BAUD = int(os.getenv("SERIAL_BAUD", "9600"))
+# --- CONFIGURACIÓN SERIAL INACTIVA EN AWS (BLINDADA) ---
+# En la nube no hay conexión física Bluetooth, por lo que se anula limpiamente para evitar errores.
+ser = None
+print("[AWS CLOUD] Puerto Serial deshabilitado localmente (Modo Servidor Web Activo)")
 
-try:
-    ser = serial.Serial(SERIAL_PORT, SERIAL_BAUD, timeout=1)
-    print(f"Bluetooth conectado en {SERIAL_PORT}")
-except Exception as e:
-    ser = None
-    print(f"Bluetooth no detectado: {e}")
-
-# --- VARIABLE DE CONTROL DE ESTADO (ANTI-REBOTE) ---
+# --- VARIABLE DE CONTROL DE ESTADO ---
 estado_actual = "X"
 
 # --- ENDPOINTS API ---
 
 @app.route('/')
 def index():
-    return jsonify({"status": "Backend API running - Carrito Explorador V1"})
+    # En lugar de solo responder un JSON, en AWS servimos tu frontend index.html moderno
+    try:
+        return render_template('index.html')
+    except Exception:
+        return jsonify({"status": "Backend API running - Carrito Explorador V2", "nota": "Sube el index.html al servidor"})
 
 @app.route('/get_logs')
 def get_logs():
     if logs_col is not None:
-        # Recupera los 10 eventos más recientes en AWS, simplificados sin humedad
-        eventos = logs_col.find().sort("fecha", -1).limit(10)
-        lista_logs = []
-        for e in eventos:
-            lista_logs.append({
-                "accion": e.get("accion", "N/A"),
-                "hora": e.get("fecha").strftime("%H:%M:%S")
-            })
-        return jsonify(lista_logs)
+        try:
+            # ✨ ACTUALIZADO: Busca los registros médicos que tu PC local subió a AWS
+            eventos = logs_col.find({"biomedicos": {"$exists": True}}).sort("fecha", -1).limit(10)
+            lista_logs = []
+            
+            for e in eventos:
+                biomedicos = e.get("biomedicos", {})
+                lista_logs.append({
+                    "hora": e.get("fecha").strftime("%H:%M:%S") if e.get("fecha") else "N/A",
+                    "bpm_promedio": biomedicos.get("bpm_promedio", 0),
+                    "estado_clinico": biomedicos.get("estado_clinico", "N/A"),
+                    "foto": e.get("archivo_foto", "N/A")
+                })
+            return jsonify(lista_logs)
+        except Exception as err:
+            print(f"⚠️ Error al consultar MongoDB en AWS: {err}")
     return jsonify([])
 
 @app.route('/control')
 def control():
-    global estado_actual
-    cmd = request.args.get('cmd', '')
-    
-    # Filtro de rebote: Solo procesa si la dirección cambió
-    if cmd != estado_actual:
-        # 1. Enviar byte directo por el puerto mapeado en Docker al coche
-        if ser and ser.is_open:
-            ser.write(cmd.encode('utf-8'))
-            print(f"[SERIAL DOCKER] Comando '{cmd}' enviado con éxito.")
-            
-        # 2. Registrar la operación en el contenedor de MongoDB
-        if logs_col is not None:
-            nombres = {'W':'Adelante', 'S':'Atrás', 'A':'Izquierda', 'D':'Derecha', 'X':'Parar'}
-            log = {
-                "fecha": datetime.datetime.now(),
-                "accion": nombres.get(cmd, "Comando"),
-                "origen": "Orchestrated Pulsador Dashboard"
-            }
-            try:
-                logs_col.insert_one(log)
-            except Exception as e:
-                print(f"Error guardando evento en MongoDB: {e}")
-                
-        estado_actual = cmd
-        
+    # Mantenemos la ruta viva por si el frontend hace peticiones de movimiento,
+    # pero en AWS no realiza ninguna acción serial para evitar excepciones.
     return "OK"
 
 @app.route('/capturar_foto')
 def capturar_foto():
-    # Extraemos la IP que el usuario ingresó dinámicamente en el Dashboard
-    ip_camara = request.args.get('ip', '')
-    if not ip_camara:
-        return jsonify({"mensaje": "Error: No se especificó la IP de la cámara."}), 400
-        
-    try:
-        url_shot = f"http://{ip_camara}/shot.jpg"
-        respuesta = requests.get(url_shot, timeout=4)
-        
-        if respuesta.status_code == 200:
-            # Creamos una carpeta 'capturas' dentro del contenedor si no existe
-            if not os.path.exists('capturas'):
-                os.makedirs('capturas')
-                
-            nombre_foto = datetime.datetime.now().strftime("capturas/foto_%Y%m%d_%H%M%S.jpg")
-            
-            with open(nombre_foto, 'wb') as f:
-                f.write(respuesta.content)
-                
-            print(f"[CÁMARA DOCKER] Foto capturada exitosamente: {nombre_foto}")
-            return jsonify({"mensaje": f"¡Foto guardada en servidor AWS! Código de archivo: {nombre_foto}"})
-        else:
-            return jsonify({"mensaje": "La cámara no entregó el flujo de imagen."}), 500
-            
-    except Exception as e:
-        print(f"Error de red con IP Webcam en Docker: {e}")
-        return jsonify({"mensaje": f"No se pudo enlazar la cámara. Verifica que comparta red Wi-Fi: {e}"}), 500
+    # Este endpoint en AWS puede quedar pasivo, ya que tu PC local se encarga de tomar
+    # la captura y subir el objeto estructurado a MongoDB.
+    return jsonify({"mensaje": "La captura se procesa desde la estación local."})
+
+# Endpoint simulado por si el HTML de AWS intenta consultar estados locales
+@app.route('/api/salud')
+def api_salud():
+    return jsonify({"bpm": 0.0, "promedio": 0, "estado": "Monitoreo disponible en estación local"})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
