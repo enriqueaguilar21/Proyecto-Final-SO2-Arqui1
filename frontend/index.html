@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard IoT - Carrito de Exploración</title>
+    <title>Dashboard IoT - Carrito de Exploración Clínica</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; user-select: none; }
@@ -37,7 +37,7 @@
         th { background: #f8f9fa; color: #5f6368; text-transform: uppercase; font-size: 12px; }
         tr:hover { background-color: #fcfcfc; }
 
-        /* Estilos del Monitor de Salud en Tiempo Real */
+        /* Estilos del Monitor de Salud en Tiempo Real (MAX30102) */
         .salud-box { display: flex; flex-direction: column; gap: 12px; max-width: 400px; margin: 10px auto; background: #1e1e1e; color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
         .salud-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 8px; }
         .salud-row:last-of-type { border-bottom: none; padding-bottom: 0; }
@@ -124,6 +124,7 @@
     </div>
 
     <script>
+        // Mapeo de mandos del teclado/mouse
         const controles = {
             'btn-W': 'W',
             'id-A': 'A',
@@ -131,6 +132,7 @@
             'btn-S': 'S'
         };
 
+        // Escuchadores de eventos para los pulsadores de dirección
         Object.keys(controles).forEach(id => {
             const boton = document.getElementById(id);
             const letra = controles[id];
@@ -156,6 +158,7 @@
             fetch('/api/control?cmd=X');
         }
 
+        // Enlace del feed de la cámara IP
         function conectarCamara() {
             const ip = document.getElementById('ip-celular').value.trim();
             const img = document.getElementById('video-stream');
@@ -170,6 +173,7 @@
             }
         }
 
+        // Trigger para capturar imagen fija e impactar en el historial clínico permanente
         function tomarFoto() {
             const ip = document.getElementById('ip-celular').value.trim();
             if(!ip) {
@@ -186,7 +190,7 @@
                 .catch(err => console.error("Error al tomar foto:", err));
         }
 
-        // ✨ ACTUALIZADO: Consume /api/get_logs y dibuja el historial clínico en AWS
+        // Trae los registros clínicos consolidados desde MongoDB (AWS)
         function actualizarLogs() {
             fetch('/api/get_logs')
                 .then(res => res.json())
@@ -213,7 +217,7 @@
                 .catch(err => console.error("Error al traer historial de AWS:", err));
         }
 
-        // ✨ ACTUALIZADO: Consume /api/salud informando que se visualiza de forma local
+        // Consume el endpoint /api/salud en AWS (Que lee el estado en tiempo real enviado por el Local)
         function actualizarMonitorSalud() {
             fetch('/api/salud')
                 .then(response => response.json())
@@ -223,15 +227,28 @@
                     
                     const estadoElement = document.getElementById('salud-estado');
                     estadoElement.innerText = data.estado;
-                    estadoElement.style.color = "#aaa";
-                    estadoElement.style.fontWeight = "normal";
+                    
+                    // Colores e indicador dinámico para la tarjeta oscura según el diagnóstico
+                    if (data.promedio > 0) {
+                        estadoElement.style.fontWeight = "bold";
+                        if (data.estado.includes("Normal")) estadoElement.style.color = "#00ffcc";
+                        else if (data.estado.includes("Taquicardia")) estadoElement.style.color = "#ff4757";
+                        else if (data.estado.includes("Bradicardia")) estadoElement.style.color = "#3498db";
+                    } else {
+                        estadoElement.style.color = "#aaa";
+                        estadoElement.style.fontWeight = "normal";
+                    }
                 })
                 .catch(error => console.error('Error al mapear telemetría:', error));
         }
         
+        // Intervalos de actualización automática
         setInterval(actualizarMonitorSalud, 2000);
         setInterval(actualizarLogs, 5000);
+        
+        // Carga inicial al abrir la página
         actualizarLogs();
+        actualizarMonitorSalud();
     </script>
 </body>
 </html>
