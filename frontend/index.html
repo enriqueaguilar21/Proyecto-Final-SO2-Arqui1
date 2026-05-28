@@ -75,14 +75,12 @@
         </div>
 
         <div class="card">
-            <h3>📋 Historial Clínico de Pacientes</h3>
+            <h3>Historial de Eventos</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Hora Local</th>
-                        <th>Ritmo Promedio</th>
-                        <th>Diagnóstico Médico</th>
-                        <th>Evidencia (Foto)</th>
+                        <th>Acción Realizada</th>
+                        <th>Hora local</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-logs">
@@ -92,6 +90,7 @@
     </div>
 
     <script>
+        // Mapeo de botones con sus comandos seriales correspondientes
         const controles = {
             'btn-W': 'W',
             'id-A': 'A',
@@ -99,6 +98,7 @@
             'btn-S': 'S'
         };
 
+        // Configurar los escuchadores de eventos táctiles y de mouse
         Object.keys(controles).forEach(id => {
             const boton = document.getElementById(id);
             const letra = controles[id];
@@ -116,6 +116,7 @@
             }
         });
 
+        // Enviar comandos respetando el prefijo /api/ de producción en AWS
         function send(command) {
             fetch('/api/control?cmd=' + command)
                 .then(response => {
@@ -129,6 +130,7 @@
             fetch('/api/control?cmd=X');
         }
 
+        // Conecta el feed de video usando la IP ingresada en la interfaz
         function conectarCamara() {
             const ip = document.getElementById('ip-celular').value.trim();
             const img = document.getElementById('video-stream');
@@ -143,6 +145,7 @@
             }
         }
 
+        // Solicita la captura de foto pasándole la IP actual del teléfono al backend
         function tomarFoto() {
             const ip = document.getElementById('ip-celular').value.trim();
             if(!ip) {
@@ -154,12 +157,11 @@
                 .then(res => res.json())
                 .then(data => {
                     alert(data.mensaje || "Foto procesada");
-                    actualizarLogs();
                 })
                 .catch(err => console.error("Error al tomar foto:", err));
         }
 
-        // ✨ Modificado: Mapea correctamente las variables de MongoDB (hora, bpm_promedio, estado_clinico, foto)
+        // Trae los últimos logs desde el backend en AWS
         function actualizarLogs() {
             fetch('/api/get_logs')
                 .then(res => res.json())
@@ -167,27 +169,21 @@
                     const tbody = document.getElementById('tabla-logs');
                     tbody.innerHTML = '';
                     data.forEach(log => {
-                        let badgeColor = "#aaa";
-                        if (log.estado_clinico.includes("Normal")) badgeColor = "#2ed573";
-                        if (log.estado_clinico.includes("Taquicardia")) badgeColor = "#ff4757";
-                        if (log.estado_clinico.includes("Bradicardia")) badgeColor = "#1e90ff";
-
                         const fila = `
                             <tr>
-                                <td><strong>${log.hora}</strong></td>
-                                <td><span style="font-weight:bold; color:#ffcc00;">${log.bpm_promedio} dpm</span></td>
-                                <td><span style="color:${badgeColor}; font-weight:bold;">${log.estado_clinico}</span></td>
-                                <td><span style="font-size:0.9em; color:#666;">📸 ${log.foto}</span></td>
+                                <td><strong>${log.accion}</strong></td>
+                                <td>${log.hora}</td>
                             </tr>`;
                         tbody.innerHTML += fila;
                     });
-                })
-                .catch(err => console.error("Error al obtener logs:", err));
+                });
         }
 
+        // Refrescar el historial de AWS automáticamente cada 5 segundos
         setInterval(actualizarLogs, 5000);
         actualizarLogs();
     </script>
 </body>
 </html>
+
 
